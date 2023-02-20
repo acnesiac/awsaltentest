@@ -1,0 +1,254 @@
+c:\python38\python.exe -m pip install --upgrade pip
+pip3 install awscli --upgrade --user
+-- if any lib conflict
+-- pip3 uninstall awsebcli
+aws --version
+
+or 
+
+-- Linux
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+rm -rf aws/ awscliv2.zip
+
+
+Create an S3 bucket and configure it to trigger a Lambda function when a new file is uploaded. Use the AWS SDK for Java or Node.js to access the S3 bucket and process the file content.
+
+Parse the file content and extract the vehicle brands. Use regular expressions or a text processing library like Apache Commons to split the content into lines and extract the brand names.
+
+Post each brand name to an SQS queue using the AWS SDK for Java or Node.js. Configure the queue to trigger another Lambda function to process the messages.
+
+Create a DynamoDB table to store the brands and their quantities. Use the AWS SDK for Java or Node.js to insert or update the records in the table based on the messages received from the SQS queue.
+
+Use AWS CloudFormation or AWS CDK to create the infrastructure and resources needed for the project, including the S3 bucket, the SQS queue, the Lambda functions, and the DynamoDB table.
+
+Implement security best practices such as IAM roles, policies, and encryption to protect the data and resources from unauthorized access or attacks.
+
+Log transactions and errors to CloudWatch to monitor the system performance and troubleshoot issues.
+
+Write unit and integration tests using frameworks like JUnit, Mockito, or Mocha to ensure the code is working correctly and efficiently.
+
+Provide a detailed README file with instructions on how to deploy and use the system, including the architecture, design decisions, and test coverage.
+
+
+Topic
+new-document-topic
+new-document-topicfifo.fifo
+
+ARN
+arn:aws:sns:eu-central-1:774145483743:new-document-topic
+arn:aws:sns:eu-central-1:774145483743:new-document-topicfifo.fifo
+
+Topic owner
+774145483743
+774145483743
+
+Create the lambda 
+
+parseEachLine
+trigger S3
+role with permissions
+s3fullaccess
+sqsfullaccess
+
+https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html
+
+Created a role
+my-s3-function-role
+
+
+console.log('Loading function');
+        
+const aws = require('aws-sdk');
+
+const s3 = new aws.S3({ apiVersion: '2006-03-01' });
+
+exports.handler = async (event, context) => {
+    //console.log('Received event:', JSON.stringify(event, null, 2));
+
+    // Get the object from the event and show its content type
+    const bucket = event.Records[0].s3.bucket.name;
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+    const params = {
+        Bucket: bucket,
+        Key: key,
+    }; 
+    try {
+        const { ContentType } = await s3.getObject(params).promise();
+        console.log('CONTENT TYPE:', ContentType);
+        return ContentType;
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+};
+              
+
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+
+public class MyLambdaHandler implements RequestHandler<S3Event, String> {
+
+    private final AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
+
+    public String handleRequest(S3Event event, Context context) {
+        context.getLogger().log("Loading function...");
+
+        try {
+            S3EventNotificationRecord record = event.getRecords().get(0);
+            String bucketName = record.getS3().getBucket().getName();
+            String key = record.getS3().getObject().getKey().replace('+', ' ');
+            S3Object s3Object = s3.getObject(bucketName, key);
+            S3ObjectInputStream objectContent = s3Object.getObjectContent();
+            String contentType = s3Object.getObjectMetadata().getContentType();
+            context.getLogger().log("CONTENT TYPE: " + contentType);
+            objectContent.close();
+            return contentType;
+        } catch (Exception e) {
+            context.getLogger().log("Error getting object from S3: " + e.getMessage());
+            throw e;
+        }
+    }
+}
+
+
+
+mys3testevent
+
+
+{
+  "Records": [
+    {
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
+      "awsRegion": "eu-central-1",
+      "eventTime": "1970-01-01T00:00:00.000Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": {
+        "principalId": "EXAMPLE"
+      },
+      "requestParameters": {
+        "sourceIPAddress": "127.0.0.1"
+      },
+      "responseElements": {
+        "x-amz-request-id": "EXAMPLE123456789",
+        "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "testConfigRule",
+        "bucket": {
+          "name": "aws-s3-bucket-35",
+          "ownerIdentity": {
+            "principalId": "EXAMPLE"
+          },
+          "arn": "arn:aws:s3:::aws-s3-bucket-35"
+        },
+        "object": {
+          "key": "vehicles.txt",
+          "size": 1024,
+          "eTag": "0123456789abcdef0123456789abcdef",
+          "sequencer": "0A1B2C3D4E5F678901"
+        }
+      }
+    }
+  ]
+}
+
+
+Create SQS
+
+parse-document-queue
+parse-document-topic.fifo
+
+
+Create a role for S3 deletion of file
+LambdaFullAccess
+
+Lambda
+parseEachLine
+
+mys3testevent2
+
+{
+  "Records": [
+    {
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
+      "awsRegion": "eu-central-1",
+      "eventTime": "1970-01-01T00:00:00.000Z",
+      "eventName": "ObjectRemoved:Delete",
+      "userIdentity": {
+        "principalId": "EXAMPLE"
+      },
+      "requestParameters": {
+        "sourceIPAddress": "127.0.0.1"
+      },
+      "responseElements": {
+        "x-amz-request-id": "EXAMPLE123456789",
+        "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "testConfigRule",
+        "bucket": {
+          "name": "aws-s3-bucket-35",
+          "ownerIdentity": {
+            "principalId": "EXAMPLE"
+          },
+          "arn": "arn:aws:s3:::aws-s3-bucket-35"
+        },
+        "object": {
+          "key": "vehicles.txt",
+          "sequencer": "0A1B2C3D4E5F678901"
+        }
+      }
+    }
+  ]
+}
+
+create  dynamo table
+cars_brands
+id string
+brand string
+
+Create the lambda 
+
+saveMessegesinDynamo
+trigger sqs
+role with permissions
+s3fullaccess
+sqsfullaccess
+dynamodbfullacess
+
+test
+
+{
+  "Records": [
+    {
+      "messageId": "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      "receiptHandle": "MessageReceiptHandle",
+      "body": "Hello from SQS!",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1523232000000",
+        "SenderId": "123456789012",
+        "ApproximateFirstReceiveTimestamp": "1523232000001"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "{{{md5_of_body}}}",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:eu-central-1:774145483743:parse-document-topic.fifo",
+      "awsRegion": "eu-central-1"
+    }
+  ]
+}
+
+mysqstestevent
