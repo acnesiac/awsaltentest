@@ -1,17 +1,3 @@
-resource "aws_s3_bucket" "my_bucket" {
-  bucket = "aws-s3-bucket-${var.APP}-${var.ENV}"
-  acl    = "private"
-  force_destroy = true
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tags = {
-    Name = "${var.APP}-${var.ENV}"
-  }
-}
-
 resource "aws_s3_bucket_versioning" "my_bucket_versioning" {
   bucket = aws_s3_bucket.my_bucket.id
 
@@ -44,6 +30,22 @@ resource "aws_s3_bucket_lifecycle_configuration" "my_bucket_lifecycle" {
   }
 }
 
+/*
+data "template_file" "s3_bucket_policy" {
+  template = file("${path.module}/json_files/s3-bucket-policy.json")
+  vars = {
+    bucket_arn = aws_s3_bucket.my_bucket.arn
+    lambda_arn = aws_lambda_function.my_lambda_function_01.arn
+    s3_invoke_lambda_policy = data.aws_iam_policy_document.s3_invoke_lambda_policy.json
+    policy_document = jsonencode(data.aws_iam_policy_document.s3_invoke_lambda_policy.json)
+  }
+}
+
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = aws_s3_bucket.my_bucket.id
+  policy = data.template_file.s3_bucket_policy.rendered
+}
+*/
 
 resource "aws_s3_bucket_notification" "my_bucket_notification" {
   bucket = aws_s3_bucket.my_bucket.id
@@ -51,7 +53,7 @@ resource "aws_s3_bucket_notification" "my_bucket_notification" {
   lambda_function {
     lambda_function_arn = aws_lambda_function.my_lambda_function_01.arn
     events = ["s3:ObjectCreated:*"]
-#    filter_prefix = "cars/"
-#    filter_suffix = "vehicles.txt"
+    filter_prefix = ""
+    filter_suffix = ""
   }
 }

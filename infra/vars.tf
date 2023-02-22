@@ -1,21 +1,25 @@
-variable "AWS_ACCESS_KEY" {}
+variable "AWS_ACCESS_KEY" {
+  type = string
+}
 
-variable "AWS_SECRET_KEY" {}
+variable "AWS_SECRET_KEY" {
+  type = string
+}
 
 variable "AWS_REGION" {
-  default = "eu-central-1"
+  type = string
 }
 
 variable "AWS_ACCOUNT_ID" {
-  default = "633691364715"
+  type = string
 }
 
 variable "ENV" {
-  default = "dev"
+  type = string
 }
 
 variable "APP" {
-  default = "simple-backend-assignment"
+  type = string
 }
 
 variable "AMIS" {
