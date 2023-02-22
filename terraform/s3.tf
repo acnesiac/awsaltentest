@@ -20,17 +20,6 @@ resource "aws_s3_bucket_versioning" "my_bucket_versioning" {
   }
 }
 
-/*
-resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
-  bucket = aws_s3_bucket.my_bucket.id
-
-  block_public_acls       = true
-  ignore_public_acls      = true
-  block_public_policy     = true
-  restrict_public_buckets = true
-}
-*/
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "my_bucket_sse_config" {
   bucket = aws_s3_bucket.my_bucket.id
 
@@ -55,22 +44,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "my_bucket_lifecycle" {
   }
 }
 
-/*
-data "template_file" "s3_bucket_policy" {
-  template = file("${path.module}/json_files/s3-bucket-policy.json")
-  vars = {
-    bucket_arn = aws_s3_bucket.my_bucket.arn
-    lambda_arn = aws_lambda_function.my_lambda_function_01.arn
-#    s3_invoke_lambda_policy = data.aws_iam_policy_document.s3_invoke_lambda_policy.json
-    policy_document = jsonencode(data.aws_iam_policy_document.s3_invoke_lambda_policy.json)
-  }
-}
-
-resource "aws_s3_bucket_policy" "my_bucket_policy" {
-  bucket = aws_s3_bucket.my_bucket.id
-  policy = data.template_file.s3_bucket_policy.rendered
-}
-*/
 
 resource "aws_s3_bucket_notification" "my_bucket_notification" {
   bucket = aws_s3_bucket.my_bucket.id

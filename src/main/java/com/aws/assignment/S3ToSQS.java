@@ -18,6 +18,9 @@ import java.io.InputStreamReader;
 
 import static java.lang.System.*;
 
+/**
+ * Lambda class to handle S3 notification events
+ */
 public class S3ToSQS implements RequestHandler<S3Event, String> {
     private final AmazonS3 s3 = AmazonS3ClientBuilder.standard().build();
     private final AmazonSQS sqs = AmazonSQSClientBuilder.standard().build();
@@ -37,27 +40,18 @@ public class S3ToSQS implements RequestHandler<S3Event, String> {
             String line;
             while ((line = reader.readLine()) != null) {
                 // Post the content of each line to the SQS queue
-/*
                 SendMessageRequest sendMessageRequest = new SendMessageRequest()
-                        .withQueueUrl("https://sqs.eu-central-1.amazonaws.com/774145483743/parse-document-queue")
-                        .withMessageBody(line);
-*/
-
-                SendMessageRequest sendMessageRequest = new SendMessageRequest()
-//                        .withQueueUrl("https://sqs.eu-central-1.amazonaws.com/774145483743/parse-document-topic.fifo")
                         .withQueueUrl("https://sqs." + region + ".amazonaws.com/" + accountId + "/sqs-" + app + "-" + env +".fifo")
                         .withMessageBody(line)
                         .withMessageGroupId("my-message-group-id")
                         .withMessageDeduplicationId(line);
-
                 sqs.sendMessage(sendMessageRequest);
             }
             reader.close();
-            // Delete the input file from S3 after successfully posting the content to SQS
+            // Delete after successfull
             s3.deleteObject(bucket, key);
             return "Success";
         } catch (Exception e) {
-            // Handle any errors that occur during the process and produce a meaningful error output to the log
             err.println(e.toString());
             return "Error";
         }

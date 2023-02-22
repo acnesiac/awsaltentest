@@ -32,22 +32,6 @@ resource "aws_lambda_function" "my_lambda_function_01" {
   }
 }
 
-/*
-data "aws_iam_policy_document" "s3_invoke_lambda_policy" {
-  statement {
-    actions = ["lambda:InvokeFunction"]
-    effect  = "Allow"
-    resources = [
-      aws_lambda_function.my_lambda_function_01.arn,
-    ]
-    principals {
-      type = "Service"
-      identifiers = ["s3.amazonaws.com"]
-    }
-  }
-  depends_on = [aws_s3_bucket.my_bucket]
-}
-*/
 
 resource "aws_lambda_permission" "test" {
   statement_id  = "AllowS3Invoke"
