@@ -1,12 +1,12 @@
 data "archive_file" "lambda_function_02" {
   type        = "zip"
-  source_file = "${path.module}/../target/simple-backend-assignment-1.0-SNAPSHOT-aws.jar"
-  output_path = "${path.module}/../target/simple-backend-assignment-1.0-SNAPSHOT-aws.zip"
+  source_file = "${path.module}/../target/aws-simple-back-end-assignment-1.0-SNAPSHOT-aws.jar"
+  output_path = "${path.module}/../target/aws-simple-back-end-assignment-1.0-SNAPSHOT-aws.zip"
 }
 
 resource "aws_lambda_function" "my_lambda_function_02" {
   #  filename         = data.archive_file.lambda_function_02.output_path
-  filename         = "${path.module}/../target/simple-backend-assignment-1.0-SNAPSHOT-aws.jar"
+  filename         = "${path.module}/../target/aws-simple-back-end-assignment-1.0-SNAPSHOT-aws.jar"
   function_name    = "my-lambda-function-save-dynamo-${var.APP}-${var.ENV}"
   handler          = "com.aws.assignment.SQSProcessor::handleRequest"
   runtime          = "java8"
@@ -20,7 +20,7 @@ resource "aws_lambda_function" "my_lambda_function_02" {
     variables = {
       "APP" = var.APP,
       "ENV" = var.ENV,
-#      "AWS_REGION" = var.AWS_REGION,
+      #"AWS_REGION" = var.AWS_REGION,
       "AWS_ACCOUNT_ID" = var.AWS_ACCOUNT_ID
       QUEUE_URL = aws_sqs_queue.my_sqs.url
     }

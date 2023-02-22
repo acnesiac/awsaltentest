@@ -22,6 +22,6 @@ resource "aws_dynamodb_table" "my_table" {
   }
 
   tags = {
-    Environment = "cars_brands-${var.APP}-${var.ENV}"
+    Environment = "${var.APP}-${var.ENV}"
   }
 }
